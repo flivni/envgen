@@ -1,8 +1,11 @@
 #if defined(ESP32)
 #define DAC_BIT_WIDTH 8
+#define DEBUG_PIN GPIO_NUM_32
 #else
 #define DAC_BIT_WIDTH 12
+#define DEBUG_PIN 11 // not sure a good pin for the Uno
 #endif
+
 
 const int A_max = (1 << DAC_BIT_WIDTH) - 1;            // 4095 on 12 bit DAC
 const int A_sustain = (1 << (DAC_BIT_WIDTH - 1)) - 1;  // 2047 on 12 bit DAC
@@ -34,6 +37,8 @@ void setup() {
     analogWriteResolution(DAC_BIT_WIDTH);  // Max out DAC resolution
     #endif
 
+    pinMode(DEBUG_PIN, OUTPUT); // using the debug pin to time the main loop.
+
     // Initialize the envelope stage
     startTime = millis();
     stage = 0;
@@ -42,6 +47,8 @@ void setup() {
 }
 
 void loop() {
+      digitalWrite(DEBUG_PIN, 1);
+
     // Example: Reset the envelope when a button is pressed
     //   if (digitalRead(2) == HIGH) {
     //     startTime = millis();
@@ -103,4 +110,5 @@ void loop() {
 #else
     analogWrite(DAC, envelopeValue);
 #endif
+    digitalWrite(DEBUG_PIN, 0);
 }
