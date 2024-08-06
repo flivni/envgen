@@ -2,8 +2,13 @@
 #include "Display.h"
 #include "EncoderHandler.h"
 
+#if defined(ESP32) && defined(DAC1)
+// #define USE_ESP32_DAC 1
+#endif
+
 #if defined(ESP32)
 #define DAC_BIT_WIDTH 8
+#define DAC_PIN 25
 #else
 #define DAC_BIT_WIDTH 12
 #define DAC_PIN 7
@@ -28,6 +33,9 @@ void setup() {
   Serial.begin(115200);
 
 #if defined(ESP32)
+  #if !defined(USE_ESP32_DAC) || USE_ESP32_DAC == 0 // we'll use PWM for ESP32-S3 since it doesn't have a DAC
+      ledcAttach(DAC_PIN, 10000, DAC_BIT_WIDTH);
+  #endif
   delay(1000);  // wait for Serial on ESP32
 #else
   analogWriteResolution(DAC_BIT_WIDTH);  // Max out DAC resolution
@@ -56,7 +64,11 @@ void loop() {
   encoderHandler.tick();
 
 #if defined(ESP32)
-  dacWrite(DAC1, envelopeValue);
+  #if defined(USE_ESP32_DAC) && USE_ESP32_DAC == 1
+      dacWrite(DAC_PIN, envelopeValue);
+  #else
+      ledcWrite(DAC_PIN, envelopeValue);
+  #endif
 #else
   analogWrite(DAC_PIN, envelopeValue);
 #endif

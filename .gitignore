@@ -1,3 +1,4 @@
 .pio/
 .vscode/
 TFT_eSPI/
+.DS_Store

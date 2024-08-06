@@ -26,10 +26,10 @@ Adafruit_MCP23X17 mcp_exp;
 
 const int A_max = (1 << DAC_BIT_WIDTH) - 1;  // 4095 on 12 bit DAC
 const int A_sustain = A_max * 0.75;
-unsigned long T_attack = 100;         // Attack time in milliseconds
-const unsigned long T_decay = 75;     // Decay time in milliseconds
-const unsigned long T_sustain = 250;  // Sustain time in milliseconds
-const unsigned long T_release = 250;  // Release time in milliseconds
+unsigned long T_attack = 1;         // Attack time in milliseconds
+const unsigned long T_decay = 1;     // Decay time in milliseconds
+const unsigned long T_sustain = 1;  // Sustain time in milliseconds
+const unsigned long T_release = 100;  // Release time in milliseconds
 
 // Time constant for exponential attack; Adjust to change shape of the curve.
 const float attack_shape_factor = 5.0;
@@ -77,7 +77,7 @@ void setup() {
 
 
   // Set DAC test values
-  // mcp_dac.setChannelValue(MCP4728_CHANNEL_A, 4095);
+  //mcp_dac.setChannelValue(MCP4728_CHANNEL_A, 2048);
   // mcp_dac.setChannelValue(MCP4728_CHANNEL_B, 2048);
   // mcp_dac.setChannelValue(MCP4728_CHANNEL_C, 1024);
   // mcp_dac.setChannelValue(MCP4728_CHANNEL_D, 4095);
@@ -98,10 +98,6 @@ void loop() {
 
   long newPosition = myEnc.read() / 4;
 
-
-
-
-
   if (newPosition != oldPosition) {
     if (newPosition < oldPosition) {
       T_attack = T_attack + 25;
@@ -118,8 +114,6 @@ void loop() {
 
   // GENERATE ENVELOPE
   float tau_attack = T_attack / attack_shape_factor;
-
-
 
   // Example: Reset the envelope when a button is pressed
   //   if (digitalRead(2) == HIGH) {
