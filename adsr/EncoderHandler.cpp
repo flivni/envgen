@@ -79,10 +79,19 @@ void EncoderHandler::tick() {
             Serial.println(envelopeDurationMs);
             break;
         }
+        // END switch
+
         if (onEncoderChanged) {
             onEncoderChanged();
         }
    }
+
+    if (_buttonPressPending) {
+        _buttonPressPending = false;
+        if (onEncoderChanged) {
+            onEncoderChanged();
+        }
+    }
 }
 
 void EncoderHandler::onPushButtonImpl() {
@@ -95,9 +104,7 @@ void EncoderHandler::onPushButtonImpl() {
     lastButtonClickTime = millis();
     encoderState = (EncoderHandler::State)((encoderState + 1) % 3);
 
-    if (onEncoderChanged) {
-        onEncoderChanged();
-    }
+    _buttonPressPending = true;
 }
 
 

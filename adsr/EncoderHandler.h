@@ -39,6 +39,7 @@ class EncoderHandler {
 
     private: 
     static EncoderHandler* instance; 
+    bool _buttonPressPending = false;
     AdsrEnvelope* adsr;
     #if defined(ESP32)
         ESP32Encoder encoder;
@@ -51,7 +52,6 @@ class EncoderHandler {
 
     void onPushButtonImpl();
     
-
     long encoderPosition = 0;
 
     #if defined(ESP32)
