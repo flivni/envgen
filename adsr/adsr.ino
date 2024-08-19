@@ -9,6 +9,7 @@
 #if defined(ESP32) && defined(DAC1)
 // #define USE_ESP32_DAC 1
 #endif
+#define USE_ESP32_DAC 1
 
 #if defined(ESP32)
 #define DAC_BIT_WIDTH 8
@@ -29,7 +30,6 @@ AdsrEnvelope adsr(
     A_max, // 4095 on 12 bit DAC
     100, // T_attack
     75, // T_decay
-    250, // T_sustain
     A_max * 0.75, //  A_sustain
     250 // T_release
     );
@@ -50,7 +50,9 @@ void setup() {
 #endif
 
 #ifdef AUTO_START_ENVELOPE
-  adsr.setEnvelopeStartTime(millis());
+  double now = millis();
+  adsr.setEnvelopeStartTime(now);
+  adsr.triggerRelease(now + 500 + adsr.getAttackDurationMs() + adsr.getDecayDurationMs());
 #endif
 
   Serial.println("Hello Envelope Generator");
@@ -59,8 +61,8 @@ void setup() {
   encoderHandler.registerOnEncoderChange(onEncoderChanged);
   adcHandler.registerOnAdcChange(onAdcChanged);
   encoderHandler.setup();
-  display.draw(&adsr, &encoderHandler);
 
+  draw();
   adcHandler.setup();
 
   pinMode(WHITE_LED_PIN, OUTPUT);
@@ -82,6 +84,7 @@ void loop() {
 
   encoderHandler.tick();
 
+
 #if defined(ESP32)
   #if defined(USE_ESP32_DAC) && USE_ESP32_DAC == 1
       dacWrite(DAC_PIN, envelopeValue);
@@ -96,19 +99,32 @@ void loop() {
 }
 
 void onEncoderChanged() {
-  display.draw(&adsr, &encoderHandler);
+   Serial.println("encoder changed") ;
+   draw();
+   Serial.println("END encoder changed") ;
+}
+
+void draw() {
+    AdsrEnvelope drawAdsr = adsr;
+    drawAdsr.startEnvelope(0);
+    drawAdsr.setSustainDurationMs(adsr.getReleaseDurationMs());
+    Serial.println("before draw");
+    display.draw(&drawAdsr, &encoderHandler);
+    Serial.println("after draw");
 }
 
 void onAdcChanged() {
   if (adcHandler.isNoteOn()) {
     #ifndef AUTO_START_ENVELOPE
-    adsr.setEnvelopeStartTime(millis());
+    Serial.println("startEnvelope");
+    adsr.startEnvelope(millis());
     #endif
     digitalWrite(WHITE_LED_PIN, HIGH);
     digitalWrite(BLUE_LED_PIN, LOW);
   } else {
     #ifndef AUTO_START_ENVELOPE
-    adsr.setEnvelopeStartTime(0);
+    Serial.println("triggerRelease");
+    adsr.triggerRelease(millis());
     #endif
     digitalWrite(WHITE_LED_PIN, LOW);
     digitalWrite(BLUE_LED_PIN, HIGH);

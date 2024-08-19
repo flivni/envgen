@@ -1,18 +1,32 @@
 #include <Arduino.h>
 #include "AdsrEnvelope.h"
 
-AdsrEnvelope::AdsrEnvelope(double envelopeMax, double attackDurationMs, double decayDurationMs, double sustainDurationMs, 
-    double sustainMax, double releaseDurationMs) {
+AdsrEnvelope::AdsrEnvelope(double envelopeMax, double attackDurationMs, double decayDurationMs,  double sustainMax, 
+        double releaseDurationMs) {
     this->envelopeMax = envelopeMax;
     this->attackDurationMs = attackDurationMs;
     this->decayDurationMs = decayDurationMs;
-    this->sustainDurationMs = sustainDurationMs;
+    this->sustainDurationMs = MAX_TIME;
     this->sustainMax = sustainMax;
     this->releaseDurationMs = releaseDurationMs;
 
     this->attackShapeFactor = 5.0;
     this->decayShapeFactor = 10.0;
     this->releaseShapeFactor = 1.0;
+}
+
+void AdsrEnvelope::startEnvelope(double time) { 
+    this->envelopeStartTime = time;
+    this->sustainDurationMs = MAX_TIME;
+}
+
+void AdsrEnvelope::triggerRelease(double time) { 
+    double sustainStartMs = this->envelopeStartTime + this->attackDurationMs + this->decayDurationMs;
+    if (time < sustainStartMs) {
+        this->sustainDurationMs = 0;
+    } else {
+        this->sustainDurationMs = time - sustainStartMs;
+    }
 }
 
 double AdsrEnvelope::getEnvelopeValue(double time) {

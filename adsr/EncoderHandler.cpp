@@ -38,12 +38,13 @@ void EncoderHandler::tick() {
         encoderPosition = newEncoderPosition;
         double attackDurationMs;
         double attackShapeFactor;
-        double maxAttackDurationMs;
+        double maxAttackDurationMs = 5000;
         switch (encoderState) {
         case ATTACK_DURATION:
             attackDurationMs = adsr->getAttackDurationMs();
+            Serial.print("Attack duration WAS: ");
+            Serial.println(attackDurationMs);
             attackDurationMs += 50 * encoderDelta;
-            maxAttackDurationMs = adsr->getEnvelopeDurationMs() - 400;
             if (attackDurationMs > maxAttackDurationMs) {
                 attackDurationMs = maxAttackDurationMs;
             }
@@ -51,7 +52,7 @@ void EncoderHandler::tick() {
                 attackDurationMs = 50;
             }
             adsr->setAttackDurationMs(attackDurationMs);
-            Serial.print("Attack duration: ");
+            Serial.print("Attack duration IS: ");
             Serial.println(attackDurationMs);
             break;
         case ATTACK_SHAPE:
@@ -67,16 +68,20 @@ void EncoderHandler::tick() {
             Serial.println(attackShapeFactor);
             break;
         case ENVELOPE_DURATION:
-            double envelopeDurationMs = adsr->getEnvelopeDurationMs();
-            envelopeDurationMs += 50 * encoderDelta;
-            if (envelopeDurationMs > 5000) {
-                envelopeDurationMs = 5000;
-            } else if (envelopeDurationMs < 500) {
-                envelopeDurationMs = 500;
+            double adrSegmentsDurationMs = adsr->getAttackDurationMs() + adsr->getDecayDurationMs() + 
+                adsr->getReleaseDurationMs();
+            double adjustedAdrSegmentsDurationMs = adrSegmentsDurationMs + 50 * encoderDelta;
+            
+            if (adjustedAdrSegmentsDurationMs > 5000) {
+                return;
+            } else if (adjustedAdrSegmentsDurationMs < 400) {
+                return;
             }
-            adsr->setEnvelopeDurationMs(envelopeDurationMs);
-            Serial.print("Envelope duration: ");
-            Serial.println(envelopeDurationMs);
+
+            double ratio = adjustedAdrSegmentsDurationMs / adrSegmentsDurationMs;
+            adsr->setAttackDurationMs(adsr->getAttackDurationMs() * ratio);
+            adsr->setdecayDurationMs(adsr->getDecayDurationMs() * ratio);  
+            adsr->setReleaseDurationMs(adsr->getReleaseDurationMs() * ratio);
             break;
         }
         // END switch
