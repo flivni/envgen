@@ -3,6 +3,10 @@
 
 class AdcHandler {
    public:
+    // the signal is centered on 1100mv
+    static constexpr double TRIGGER_ON_PKPK_MV = 275.0;
+    static constexpr double TRIGGER_OFF_PKPK_MV = 190.0;
+
     void setup();
     void tick();
     using OnAdcChanged = void(*)();

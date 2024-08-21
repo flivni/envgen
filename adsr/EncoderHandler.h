@@ -22,6 +22,11 @@ class EncoderHandler {
     const int ENCODER_BUTTON_PIN = 3;
     #endif
 
+    // NB: I don't know the right values for these constants; these need to be validated
+    static constexpr double MAX_ATTACK_DURATION_MS = 5000;
+    static constexpr double MAX_ADR_DURATION_MS = 5000;
+    static constexpr double MIN_ADR_DURATION_MS = 400;
+
     using OnEncoderChanged = void(*)();
     EncoderHandler(AdsrEnvelope* adsr);
     void setup();

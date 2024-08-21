@@ -38,21 +38,18 @@ void EncoderHandler::tick() {
         encoderPosition = newEncoderPosition;
         double attackDurationMs;
         double attackShapeFactor;
-        double maxAttackDurationMs = 5000;
         switch (encoderState) {
         case ATTACK_DURATION:
             attackDurationMs = adsr->getAttackDurationMs();
-            Serial.print("Attack duration WAS: ");
-            Serial.println(attackDurationMs);
             attackDurationMs += 50 * encoderDelta;
-            if (attackDurationMs > maxAttackDurationMs) {
-                attackDurationMs = maxAttackDurationMs;
+            if (attackDurationMs > MAX_ATTACK_DURATION_MS) {
+                attackDurationMs = MAX_ATTACK_DURATION_MS;
             }
             if (attackDurationMs < 50) {
                 attackDurationMs = 50;
             }
             adsr->setAttackDurationMs(attackDurationMs);
-            Serial.print("Attack duration IS: ");
+            Serial.print("Attack duration: ");
             Serial.println(attackDurationMs);
             break;
         case ATTACK_SHAPE:
@@ -72,9 +69,9 @@ void EncoderHandler::tick() {
                 adsr->getReleaseDurationMs();
             double adjustedAdrSegmentsDurationMs = adrSegmentsDurationMs + 50 * encoderDelta;
             
-            if (adjustedAdrSegmentsDurationMs > 5000) {
+            if (adjustedAdrSegmentsDurationMs > MAX_ADR_DURATION_MS) {
                 return;
-            } else if (adjustedAdrSegmentsDurationMs < 400) {
+            } else if (adjustedAdrSegmentsDurationMs < MIN_ADR_DURATION_MS) {
                 return;
             }
 
