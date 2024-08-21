@@ -3,6 +3,7 @@
 
 class AdsrEnvelope {
 private:
+    const double MAX_TIME = 1e+30;
     double envelopeMax;
     double attackShapeFactor;
     double attackDurationMs;
@@ -15,10 +16,23 @@ private:
     double releaseShapeFactor;
 
 public:
-    AdsrEnvelope(double envelopeMax, double attackDurationMs, double decayDurationMs, double sustainDurationMs, 
-        double sustainMax, double releaseDurationMs);
+    AdsrEnvelope(double envelopeMax, double attackDurationMs, double decayDurationMs, double sustainMax, 
+        double releaseDurationMs);
     
-    inline void setEnvelopeStartTime(double time) { this->envelopeStartTime = time; }
+    // Copy constructor
+    AdsrEnvelope(const AdsrEnvelope& source)
+        : envelopeMax(source.envelopeMax), attackShapeFactor(source.attackShapeFactor), 
+        attackDurationMs(source.attackDurationMs), envelopeStartTime(source.envelopeStartTime),
+        decayDurationMs(source.decayDurationMs), decayShapeFactor(source.decayShapeFactor), 
+        sustainDurationMs(source.sustainDurationMs), sustainMax(source.sustainMax), 
+        releaseDurationMs(source.releaseDurationMs), releaseShapeFactor(source.releaseShapeFactor)
+         {}
+
+    void startEnvelope(double time);
+    void triggerRelease(double time);
+    bool isTriggerSet() {
+        return sustainDurationMs < 1e+29;
+    }
 
     double getEnvelopeValue(double time);
 
@@ -40,6 +54,7 @@ public:
     inline double getDecayShapeFactor() { return decayShapeFactor; }
     inline double getSustainDurationMs() { return sustainDurationMs; }
     inline double getSustainMax() { return sustainMax; }
+    inline double getReleaseDurationMs() { return releaseDurationMs; }
     inline double getEnvelopeDurationMs() { return attackDurationMs + decayDurationMs + sustainDurationMs + releaseDurationMs; }
 };
 #endif

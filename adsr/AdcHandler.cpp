@@ -8,7 +8,10 @@ void AdcHandler::setup() {
     gpio_set_direction(adc_gpio, GPIO_MODE_INPUT);
 
     adc1_config_width(ADC_WIDTH_BIT_12);
-    adc1_config_channel_atten(ADC1_CHANNEL_1, ADC_ATTEN_DB_11);  // ADC_CHANNEL_1 = pin 37
+    // ADC1_CHANNEL_1 = pin 37
+    // ADC_ATTEN_DB_11 = 0-2450mv
+    // https://docs.espressif.com/projects/esp-idf/en/v4.4/esp32/api-reference/peripherals/adc.html#adc-attenuation
+    adc1_config_channel_atten(ADC1_CHANNEL_1, ADC_ATTEN_DB_11);
     Serial.println("ADC set up.");
 }
 
@@ -16,8 +19,6 @@ void AdcHandler::tick() {
     if (micros() - m_lastSampleTime < 100) {
         return; 
     }
-    m_lastSampleTime = micros();
-
     m_lastSampleTime = micros();  // Update the time for the next sample
 
     switch (m_state) {
@@ -40,7 +41,8 @@ void AdcHandler::tick() {
 void AdcHandler::takeSample() {
     int raw = adc1_get_raw(ADC1_CHANNEL_1);
     // Vout = Dout * Vmax / Dmax 
-    m_values[m_sampleIndex] = raw * 3.3 / 4095;
+    // Vmax is 2.450V based on the attenuation set by `adc1_config_channel_atten(..)` above
+    m_values[m_sampleIndex] = raw * 2.450 / 4095;
 }
 
 void AdcHandler::processSamples() {
@@ -59,14 +61,14 @@ void AdcHandler::processSamples() {
     average /= NUM_SAMPLES;
     double pkpk = max - min;
 
-    if (pkpk * 1000 > 1050 && !m_isNoteOn) {
+    if (pkpk * 1000 >= AdcHandler::TRIGGER_ON_PKPK_MV && !m_isNoteOn) {
         m_isNoteOn = true;
         Serial.print("Note On: pk-pk: ");
         Serial.print(pkpk * 1000, 0);
         Serial.println("mv");
 
         onAdcChanged();
-    } else if (pkpk * 1000 < 900 && m_isNoteOn) {
+    } else if (pkpk * 1000 < AdcHandler::TRIGGER_OFF_PKPK_MV && m_isNoteOn) {
         m_isNoteOn = false;
         Serial.print("Note Off: pk-pk: ");
         Serial.print(pkpk * 1000, 0);
@@ -74,14 +76,15 @@ void AdcHandler::processSamples() {
         onAdcChanged();
     }
 
-    /* 
+    /*
+    
     unsigned long currentTime = millis();
     if (currentTime - lastSampleTime < 1000) {
       return;
     }
     lastSampleTime = currentTime;
 
-    if ((pkpk * 1000) < 420) { return; } // not sure why so noisy.
+    // if ((pkpk * 1000) < 220) { return; } // not sure why so noisy.
 
     Serial.print("ADC voltage - min: ");
     Serial.print(min * 1000, 0);

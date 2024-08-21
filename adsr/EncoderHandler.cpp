@@ -38,14 +38,12 @@ void EncoderHandler::tick() {
         encoderPosition = newEncoderPosition;
         double attackDurationMs;
         double attackShapeFactor;
-        double maxAttackDurationMs;
         switch (encoderState) {
         case ATTACK_DURATION:
             attackDurationMs = adsr->getAttackDurationMs();
             attackDurationMs += 50 * encoderDelta;
-            maxAttackDurationMs = adsr->getEnvelopeDurationMs() - 400;
-            if (attackDurationMs > maxAttackDurationMs) {
-                attackDurationMs = maxAttackDurationMs;
+            if (attackDurationMs > MAX_ATTACK_DURATION_MS) {
+                attackDurationMs = MAX_ATTACK_DURATION_MS;
             }
             if (attackDurationMs < 50) {
                 attackDurationMs = 50;
@@ -67,16 +65,20 @@ void EncoderHandler::tick() {
             Serial.println(attackShapeFactor);
             break;
         case ENVELOPE_DURATION:
-            double envelopeDurationMs = adsr->getEnvelopeDurationMs();
-            envelopeDurationMs += 50 * encoderDelta;
-            if (envelopeDurationMs > 5000) {
-                envelopeDurationMs = 5000;
-            } else if (envelopeDurationMs < 500) {
-                envelopeDurationMs = 500;
+            double adrSegmentsDurationMs = adsr->getAttackDurationMs() + adsr->getDecayDurationMs() + 
+                adsr->getReleaseDurationMs();
+            double adjustedAdrSegmentsDurationMs = adrSegmentsDurationMs + 50 * encoderDelta;
+            
+            if (adjustedAdrSegmentsDurationMs > MAX_ADR_DURATION_MS) {
+                return;
+            } else if (adjustedAdrSegmentsDurationMs < MIN_ADR_DURATION_MS) {
+                return;
             }
-            adsr->setEnvelopeDurationMs(envelopeDurationMs);
-            Serial.print("Envelope duration: ");
-            Serial.println(envelopeDurationMs);
+
+            double ratio = adjustedAdrSegmentsDurationMs / adrSegmentsDurationMs;
+            adsr->setAttackDurationMs(adsr->getAttackDurationMs() * ratio);
+            adsr->setdecayDurationMs(adsr->getDecayDurationMs() * ratio);  
+            adsr->setReleaseDurationMs(adsr->getReleaseDurationMs() * ratio);
             break;
         }
         // END switch
